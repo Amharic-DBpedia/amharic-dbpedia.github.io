@@ -59,6 +59,18 @@ just check
 
 Run `just --list` to see the individual frontend, backend, and extraction commands.
 
+## Git Hooks and CI
+
+`pnpm install` configures Husky hooks:
+
+- `pre-commit` runs frontend formatting and lint checks.
+- `pre-push` runs frontend typechecking, tests, build, and backend checks.
+
+GitHub Actions runs frontend CI, backend CI, PR metadata validation, and GitHub Pages
+deployment as separate workflows. The frontend is deployed to:
+
+<https://amharic-dbpedia.github.io/website/>
+
 ## Extraction Framework Boundary
 
 The backend expects the DBpedia Extraction Framework checkout at
