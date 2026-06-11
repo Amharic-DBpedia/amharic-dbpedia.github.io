@@ -1,0 +1,69 @@
+name: Frontend CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Frontend quality
+    runs-on: ubuntu-latest
+    env:
+      HUSKY: "0"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Run frontend checks
+        run: pnpm check:frontend
+
+  e2e:
+    name: Frontend E2E (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: local-root
+            vite_base_path: /
+            playwright_base_url: http://127.0.0.1:5174/
+          - target: github-pages
+            vite_base_path: /website/
+            playwright_base_url: http://127.0.0.1:5174/website/
+    env:
+      HUSKY: "0"
+      VITE_BASE_PATH: ${{ matrix.vite_base_path }}
+      PLAYWRIGHT_BASE_URL: ${{ matrix.playwright_base_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Install Chromium
+        run: pnpm --filter @amdb/web exec playwright install --with-deps chromium
+      - name: Run browser tests
+        run: pnpm test:e2e
