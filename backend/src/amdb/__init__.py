@@ -1,2 +1,1 @@
 """Amharic DBpedia automation backend."""
-
