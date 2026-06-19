@@ -1,0 +1,38 @@
+{
+  "name": "amharic-dbpedia-website",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22.17"
+  },
+  "scripts": {
+    "prepare": "husky",
+    "dev": "pnpm --filter @amdb/web dev",
+    "dev:web": "pnpm --filter @amdb/web dev",
+    "dev:api": "cd backend && uv run uvicorn amdb.main:app --reload --host 127.0.0.1 --port 8000",
+    "build": "pnpm -r build",
+    "typecheck": "tsc -b tsconfig.workspaces.json",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "test": "pnpm -r --if-present test",
+    "test:api": "cd backend && uv run pytest",
+    "check:api": "cd backend && uv run ruff check src tests && uv run mypy src && uv run pytest",
+    "test:e2e": "pnpm --filter @amdb/web test:e2e",
+    "check:frontend": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build",
+    "check:backend": "pnpm run check:api",
+    "ci:web": "pnpm run check:frontend",
+    "ci": "pnpm run check:frontend && pnpm run check:backend"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.0",
+    "@playwright/test": "^1.56.0",
+    "@types/node": "^22.17.0",
+    "husky": "^9.1.7",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.0",
+    "vitest": "^4.0.8"
+  }
+}

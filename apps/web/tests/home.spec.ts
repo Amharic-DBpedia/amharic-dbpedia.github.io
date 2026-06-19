@@ -1,0 +1,71 @@
+import { expect, test } from "@playwright/test";
+
+const configuredBaseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:5174";
+const configuredBasePath = new URL(configuredBaseURL).pathname;
+
+function appPath(path: string): string {
+  const basePath = configuredBasePath.endsWith("/") ? configuredBasePath : `${configuredBasePath}/`;
+  return basePath === "/" ? path : `${basePath}${path.replace(/^\//, "")}`;
+}
+
+test("renders chapter homepage and resource search", async ({ page }) => {
+  await page.goto(appPath("/"));
+  await expect(page.getByRole("heading", { name: "Amharic DBpedia Chapter" })).toBeVisible();
+  await expect(page.getByLabel("Resource title or IRI")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Latest news" })).toBeVisible();
+  await expect(page.locator(".news-item")).toHaveCount(3);
+  await expect(page.getByRole("link", { name: "News", exact: true })).toBeVisible();
+});
+
+test("renders a dedicated news destination from the primary navigation", async ({ page }) => {
+  await page.goto(appPath("/"));
+  await page.getByRole("link", { name: "News", exact: true }).click();
+
+  await expect(page).toHaveURL(new RegExp(`${appPath("/news")}$`));
+  await expect(page.getByRole("heading", { name: "News and project updates" })).toBeVisible();
+  await expect(page.getByText("Latest update")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Earlier updates" })).toBeVisible();
+});
+
+test("embeds Tentris inside the SPARQL page", async ({ page }) => {
+  await page.goto(appPath("/sparql"));
+
+  await expect(page.getByRole("heading", { name: "Tentris query workspace" })).toBeVisible();
+  await expect(page.getByTitle("Amharic DBpedia Tentris query interface")).toHaveAttribute(
+    "src",
+    "https://am.dbpedia.data.dice-research.org/ui",
+  );
+});
+
+test("shows FastAPI health on the automation page", async ({ page }) => {
+  await page.route("**/api/health", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ status: "ok" }),
+    });
+  });
+
+  await page.goto(appPath("/automation"));
+
+  await expect(page.getByRole("heading", { name: "Automation API" })).toBeVisible();
+  await expect(page.getByText("API is available")).toBeVisible();
+});
+
+test("resource route keeps Amharic titles readable when endpoint has no triples", async ({
+  page,
+}) => {
+  await page.route("**/sparql?**", async (route) => {
+    await route.fulfill({
+      contentType: "application/sparql-results+json",
+      body: JSON.stringify({ head: { vars: ["predicate", "object"] }, results: { bindings: [] } }),
+    });
+  });
+
+  await page.goto(appPath("/resource/ወርቁ_ማሞ"));
+
+  await expect(
+    page.getByRole("link", { name: "http://am.dbpedia.org/resource/ወርቁ_ማሞ" }),
+  ).toBeVisible();
+  await expect(page.getByText("No triples returned")).toBeVisible();
+  await expect(page.getByText("%25E1")).toHaveCount(0);
+});

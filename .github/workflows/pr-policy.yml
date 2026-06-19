@@ -1,0 +1,49 @@
+name: PR Policy
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  metadata:
+    name: PR metadata
+    runs-on: ubuntu-latest
+    env:
+      PR_TITLE: ${{ github.event.pull_request.title }}
+      PR_BODY: ${{ github.event.pull_request.body }}
+    steps:
+      - name: Validate semantic title and template sections
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          import sys
+
+          title = os.environ.get("PR_TITLE", "")
+          body = os.environ.get("PR_BODY", "")
+          semantic_title = re.compile(
+              r"^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)"
+              r"(\([a-z0-9._/-]+\))?!?: .+"
+          )
+          required_sections = [
+              "## Summary",
+              "## Changes",
+              "## Validation",
+              "## Deployment Impact",
+          ]
+
+          errors = []
+          if not semantic_title.match(title):
+              errors.append("PR title must use a semantic/conventional commit prefix.")
+          for section in required_sections:
+              if section not in body:
+                  errors.append(f"PR body is missing required section: {section}")
+
+          if errors:
+              print("\n".join(f"- {error}" for error in errors))
+              sys.exit(1)
+          PY
