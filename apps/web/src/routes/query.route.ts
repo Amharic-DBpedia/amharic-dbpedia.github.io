@@ -50,7 +50,10 @@ export function renderQuery(layout: AppLayout): void {
   tentrisCopy.append(tentrisEyebrow, tentrisTitle, tentrisDescription);
   const tentrisExternal = externalLink(env.sparqlUi, "Open in new tab");
   tentrisExternal.className = "button-link";
-  tentrisHeader.append(tentrisCopy, tentrisExternal);
+  const tentrisActions = document.createElement("div");
+  tentrisActions.className = "tentris-workspace__actions";
+  tentrisActions.append(tentrisExternal);
+  tentrisHeader.append(tentrisCopy, tentrisActions);
 
   const tentrisFrame = document.createElement("iframe");
   tentrisFrame.className = "tentris-frame";
@@ -59,6 +62,7 @@ export function renderQuery(layout: AppLayout): void {
   tentrisFrame.loading = "eager";
   tentrisFrame.referrerPolicy = "no-referrer";
   tentrisFrame.setAttribute("allow", "clipboard-read; clipboard-write");
+  tentrisFrame.setAttribute("fetchpriority", "high");
 
   const tentrisFallback = document.createElement("p");
   tentrisFallback.className = "tentris-workspace__fallback";
