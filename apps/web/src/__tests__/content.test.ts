@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 describe("web content", () => {
   it("exposes the resource viewer route", () => {
-    expect(navigation.map((item) => item.href)).toContain("/resource/ደብረ_ብርሃን");
+    expect(navigation.map((item) => item.href)).toContain("/resource");
   });
 
   it("exposes news as a primary navigation destination", () => {
@@ -33,8 +33,6 @@ describe("web content", () => {
 
     expect(latest?.title.en).toContain("LREC 2026");
     expect(latest?.href).toBe("https://lrec.elra.info/lrec2026-main-627");
-    expect(latest?.links?.map((link) => link.href)).toContain(
-      "https://github.com/Amharic-DBpedia/",
-    );
+    expect(latest?.links?.map((link) => link.href)).toContain("https://github.com/AmharicDBpedia");
   });
 });

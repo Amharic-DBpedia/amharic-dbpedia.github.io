@@ -15,6 +15,10 @@ test("renders chapter homepage and resource search", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Latest news" })).toBeVisible();
   await expect(page.locator(".news-item")).toHaveCount(3);
   await expect(page.getByRole("link", { name: "News", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "GitHub" })).toHaveAttribute(
+    "href",
+    "https://github.com/AmharicDBpedia",
+  );
 });
 
 test("renders a dedicated news destination from the primary navigation", async ({ page }) => {
@@ -45,60 +49,38 @@ test("renders the non-technical about page", async ({ page }) => {
   await expect(page.getByText("Why Amharic needs its own chapter")).toBeVisible();
 });
 
-test("renders the latest generated backend statistics", async ({ page }) => {
-  await page.route("**/api/statistics/latest", async (route) => {
-    await route.fulfill({
-      contentType: "application/json",
-      body: JSON.stringify({
-        run_id: "browser-statistics",
-        source_dir: "/tmp/rdf",
-        report_path: "/tmp/report.json",
-        generated_at: "2026-06-12T06:00:00+00:00",
-        success: true,
-        engine: "python-streaming+def-native",
-        dump_date: "20250820",
-        extraction_run_id: "GSoC2025",
-        file_count: 32,
-        total_triples: 600792,
-        unique_subjects: 68937,
-        unique_predicates: 1016,
-        unique_objects: 230955,
-        mapping_based_triples: 19456,
-        raw_infobox_triples: 39892,
-        dataset_statistics: [
-          {
-            dataset_name: "amwiki-page-links",
-            file_path: "/tmp/page-links.ttl.bz2",
-            triple_count: 147062,
-            subject_count: 22602,
-            predicate_count: 1,
-            object_count: 50000,
-            skipped_lines: 0,
-            sample_predicates: [],
-          },
-        ],
-        native_def_stats: {
-          attempted: true,
-          success: true,
-          exit_code: 0,
-          stdout_path: "/tmp/stdout.log",
-          stderr_path: "/tmp/stderr.log",
-          statistics_dir: "/tmp/native",
-          error: null,
-        },
-        error: null,
-      }),
-    });
-  });
-
+test("renders static statistics with clickable definitions", async ({ page }) => {
   await page.goto(appPath("/statistics"));
 
-  await expect(
-    page.getByRole("heading", { name: "Latest generated extraction statistics" }),
-  ).toBeVisible();
-  await expect(page.getByText("600,792")).toBeVisible();
-  await expect(page.getByText("DEF-native statistics: completed successfully.")).toBeVisible();
-  await expect(page.getByRole("rowheader", { name: "amwiki-page-links" })).toBeVisible();
+  await expect(page.getByText("Latest generated extraction statistics")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "How to read these numbers" })).toHaveCount(0);
+  await expect(page.getByText("97")).toBeVisible();
+  await page.getByRole("button", { name: /97\s+Mapped templates/i }).click();
+  await expect(page.getByRole("dialog", { name: "Mapped templates" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open Amharic mappings" })).toHaveAttribute(
+    "href",
+    "https://mappings.dbpedia.org/index.php/Mapping_am",
+  );
+  await page.mouse.click(8, 8);
+  await expect(page.getByRole("dialog", { name: "Mapped templates" })).toHaveCount(0);
+  await page.getByRole("button", { name: /77.29%\s+Property coverage/i }).click();
+  await expect(page.getByRole("link", { name: "Open DBpedia ontology example" })).toHaveAttribute(
+    "href",
+    "https://mappings.dbpedia.org/index.php/OntologyClass%3APerson",
+  );
+});
+
+test("renders a dedicated resource landing page", async ({ page }) => {
+  await page.goto(appPath("/resource"));
+
+  await expect(page.getByRole("heading", { name: "Resource explorer" })).toBeVisible();
+  await expect(page.getByLabel("Resource title or IRI")).toBeVisible();
+  await expect(page.getByPlaceholder("ዳኛቸው ወርቁ")).toBeVisible();
+  await expect(page.getByRole("link", { name: "አዲስ አበባ" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "ደብረ ብርሃን" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "ኢትዮጵያ" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "ፓውል ሃርዲንግ" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "ዳኛቸው ወርቁ" })).toBeVisible();
 });
 
 test("resource route keeps Amharic titles readable when endpoint has no triples", async ({
@@ -111,10 +93,10 @@ test("resource route keeps Amharic titles readable when endpoint has no triples"
     });
   });
 
-  await page.goto(appPath("/resource/ወርቁ_ማሞ"));
+  await page.goto(appPath("/resource/ዳኛቸው ወርቁ"));
 
   await expect(
-    page.getByRole("link", { name: "http://am.dbpedia.org/resource/ወርቁ_ማሞ" }),
+    page.getByRole("link", { name: "http://am.dbpedia.org/resource/ዳኛቸው_ወርቁ" }),
   ).toBeVisible();
   await expect(page.getByText("No triples returned")).toBeVisible();
   await expect(page.getByText("%25E1")).toHaveCount(0);
